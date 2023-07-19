@@ -11,11 +11,9 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
 import environ
+import cloudinary
 
 from pathlib import Path
-from datetime import timedelta
-
-from django.utils.translation import gettext_lazy as _
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -35,14 +33,37 @@ DEBUG = False
 
 # https://purple-morning-8116.fly.dev/
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "purple-morning-8116.fly.dev"]
-CSRF_TRUSTED_ORIGINS = ["https://purple-morning-8116.fly.dev"]
+CSRF_TRUSTED_ORIGINS = [
+    "https://purple-morning-8116.fly.dev",
+    ]
 
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",
+# ]
+CORS_ALLOW_ALL_ORIGINS = True
+# CORS_URLS_REGEX = r"^/api/.*$"
+CORS_ALLOW_METHODS = (
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+)
+CORS_ALLOW_HEADERS = (
+    "accept",
+    "authorization",
+    "content-type",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+)
 
 # Application definition
-
 INSTALLED_APPS = [
     "jet.dashboard",
     "jet",
+    'corsheaders',
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -58,6 +79,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -125,16 +147,20 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": "django.contrib.auth.\
+            password_validation.UserAttributeSimilarityValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "NAME": "django.contrib.auth.\
+            password_validation.MinimumLengthValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        "NAME": "django.contrib.auth.\
+            password_validation.CommonPasswordValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        "NAME": "django.contrib.auth.\
+            password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -151,8 +177,6 @@ LANGUAGES = (("uk", "Ukrainian"),)
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
-
-# LOCALE_PATHS = (os.path.join(BASE_DIR, "locale"),)
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
@@ -183,6 +207,12 @@ CLOUDINARY_STORAGE = {
     "API_KEY": os.environ.get("CLOUDINARY_API_KEY"),
     "API_SECRET": os.environ.get("CLOUDINARY_API_SECRET"),
 }
+
+cloudinary.config(
+    cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
+    api_key=CLOUDINARY_STORAGE['API_KEY'],
+    api_secret=CLOUDINARY_STORAGE['API_SECRET']
+)
 
 # JET
 JET_DEFAULT_THEME = "green"
@@ -225,7 +255,7 @@ CACHES = {
         "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
         "LOCATION": os.path.join(BASE_DIR, "tesla_project_cache"),
         "OPTIONS": {
-            "MAX_ENTRIES": 1000,
+            "MAX_ENTRIES": 800,
             "CULL_FREQUENCY": 3,
             "CULL_PERCENT": 10,
         },

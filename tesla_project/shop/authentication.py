@@ -3,6 +3,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import BasePermission
 
 from .models import Service
+from tesla_project.settings import env
 
 
 class ServiceOnlyAuthentication(BaseAuthentication):
@@ -15,6 +16,7 @@ class ServiceOnlyAuthentication(BaseAuthentication):
                 if token == service.token:
                     return (service, None)
             except Service.DoesNotExist:
+                print(f"Service with token '{token}' does not exist.")
                 pass
         raise AuthenticationFailed("Invalid service token.")
 
@@ -26,7 +28,6 @@ class ServiceOnlyAuthorizationSite(BasePermission):
     def has_permission(self, request, view):
         if isinstance(request.user, Service):
             service_name = request.user.name
-            if service_name == "Сайт" and request.method != "GET":
-                return False
-            return True
+            if service_name == env("SERVICE_SITE_NAME"):
+                return True
         return False
