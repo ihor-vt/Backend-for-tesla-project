@@ -10,6 +10,7 @@ router.register(r"products/main", views.ProductMainPageViewSet)
 router.register(r"products", views.ProductViewSet)
 router.register(r"comments", views.CommentViewSet)
 router.register(r"medias", views.MainPageViewSet)
+router.register(r"contacts", views.ContactViewSet)
 
 urlpatterns = [
     path("api/", include(router.urls)),

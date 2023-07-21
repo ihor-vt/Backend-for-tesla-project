@@ -67,7 +67,9 @@ class Product(models.Model):
     main_page = models.BooleanField(
         default=False,
         verbose_name="Товар на головній сторінці")
-    available = models.BooleanField(default=True, verbose_name="Наявність")
+    available = models.BooleanField(
+        default=True,
+        verbose_name="Наявність")
     created_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -226,3 +228,54 @@ class MainPage(models.Model):
     class Meta:
         verbose_name = "Головне медіа"
         verbose_name_plural = "Головні медіа"
+
+
+class Contact(models.Model):
+    first_name = models.CharField(
+        max_length=20,
+        verbose_name="Ім'я")
+    last_name = models.CharField(
+        max_length=20,
+        verbose_name="Фамілія")
+    mobile_phone = models.CharField(
+        max_length=15,
+        verbose_name="Мобільний телефон")
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Товар",
+    )
+    done = models.BooleanField(
+        default=False,
+        verbose_name="Оброблено"
+    )
+    comment = models.TextField(
+        max_length=400,
+        null=True,
+        blank=True,
+        verbose_name="Записка"
+    )
+    created = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Час створення")
+    updated = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Час обновлення")
+    updated_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name='contacts_updated',
+        null=True,
+        blank=True,
+        verbose_name="Обновив(ла)",
+        )
+
+    def __str__(self) -> str:
+        return f"{self.id} {self.first_name} \
+            {self.last_name} {self.mobile_phone}"
+
+    class Meta:
+        verbose_name = "Контакт"
+        verbose_name_plural = "Контакти "

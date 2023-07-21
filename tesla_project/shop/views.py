@@ -1,13 +1,16 @@
 from django.urls import reverse
+from django.conf import settings
 from django.shortcuts import render
+from django.core.mail import send_mail, BadHeaderError
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 
-from .models import Category, Product, Comment, MainPage
+from .models import Category, Product, Comment, MainPage, Contact
 from .serializers import CategorySerializer,\
-    ProductSerializer, CommentSerializer, MainPageSerializer
+    ProductSerializer, CommentSerializer, \
+    MainPageSerializer, ContactSerializer
 from .authentication import ServiceOnlyAuthentication,\
     ServiceOnlyAuthorizationSite
 
@@ -130,6 +133,52 @@ class MainPageViewSet(viewsets.ModelViewSet):
         data = serializer.data
 
         return Response(data)
+
+
+class ContactViewSet(viewsets.ModelViewSet):
+    queryset = Contact.objects.none()
+    serializer_class = ContactSerializer
+    authentication_classes = [ServiceOnlyAuthentication]
+    permission_classes = [ServiceOnlyAuthorizationSite]
+    http_method_names = ['post']
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        product_id = data.get('product_id', None)
+
+        if product_id is not None:
+            try:
+                product = Product.objects.get(pk=product_id)
+                data['product'] = product.id
+            except Product.DoesNotExist:
+                return Response(
+                    {'error': 'Invalid product_id'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+
+        # Відправка сповіщення на електронну пошту
+        subject = "Новий контакт був доданий"
+        message = f"Ім'я: {serializer.data['first_name']}\nФамілія: \
+            {serializer.data['last_name']}\nТелефон: \
+                {serializer.data['mobile_phone']}"
+        from_email = settings.DEFAULT_FROM_EMAIL
+        recipient_list = [settings.ADMIN_EMAIL]
+
+        try:
+            send_mail(subject, message, from_email, recipient_list)
+        except BadHeaderError as e:
+            print(f"Invalid header found: {e}")
+        except Exception as e:
+            print(f"Failed to send email: {e}")
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers)
 
 
 def index(request):

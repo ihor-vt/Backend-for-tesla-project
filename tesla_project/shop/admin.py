@@ -3,7 +3,7 @@ from django.utils.html import mark_safe
 from django.contrib.auth.hashers import make_password
 from django.utils.crypto import get_random_string
 
-from .models import Category, Product, Service, Comment, MainPage
+from .models import Category, Product, Service, Comment, MainPage, Contact
 
 
 @admin.register(Service)
@@ -215,3 +215,52 @@ class MainPageAdmin(admin.ModelAdmin):
 
     media_thumbnail.allow_tags = True
     media_thumbnail.short_description = "Медіа"
+
+
+@admin.register(Contact)
+class ContactAdmin(admin.ModelAdmin):
+    list_display = [
+        "full_name",
+        "mobile_phone",
+        "product",
+        "done",
+        "created",
+        "updated",
+        "updated_by"
+        ]
+
+    list_filter = [
+        "done",
+        "created",
+        "updated",
+        "updated_by"
+        ]
+
+    search_fields = [
+        "first_name",
+        "last_name",
+        "mobile_phone",
+        "comment",
+        "product__name"
+        ]
+
+    readonly_fields = [
+        "created",
+        "updated",
+        "updated_by"
+        ]
+
+    list_display_links = [
+        "full_name",
+        "mobile_phone",
+        "product",
+        "updated_by",
+        ]
+
+    def full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}"
+    full_name.short_description = "Ім'я та Фамілія"
+
+    def save_model(self, request, obj, form, change):
+        obj.updated_by = request.user
+        super().save_model(request, obj, form, change)
