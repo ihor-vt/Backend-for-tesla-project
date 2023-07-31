@@ -258,7 +258,8 @@ class ContactAdmin(admin.ModelAdmin):
         ]
 
     def full_name(self, obj):
-        return f"{obj.first_name} {obj.last_name}"
+        return f"{obj.first_name} {obj.last_name}" \
+            if obj.last_name else f"{obj.first_name}"
     full_name.short_description = "Ім'я та Фамілія"
 
     def save_model(self, request, obj, form, change):

@@ -147,20 +147,16 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.\
-            password_validation.UserAttributeSimilarityValidator",
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        "NAME": "django.contrib.auth.\
-            password_validation.MinimumLengthValidator",
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        "NAME": "django.contrib.auth.\
-            password_validation.CommonPasswordValidator",
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        "NAME": "django.contrib.auth.\
-            password_validation.NumericPasswordValidator",
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -206,6 +202,12 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL")
+DEVELOPER_EMAIL = os.environ.get("ADMIN_EMAIL")
+DEVELOPER_NAME = os.environ.get("DEVELOPER_NAME")
+
+ADMINS = [
+    (DEVELOPER_NAME, DEVELOPER_EMAIL), ("Tesla Service Lviv", ADMIN_EMAIL)
+    ]
 
 # EMAIL_HOST = env("EMAIL_HOST")
 # EMAIL_PORT = env("EMAIL_PORT")

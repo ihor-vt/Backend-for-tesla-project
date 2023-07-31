@@ -1,9 +1,14 @@
+import logging
+
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import BasePermission
 
 from .models import Service
 from tesla_project.settings import env
+
+
+logger = logging.getLogger(__name__)
 
 
 class ServiceOnlyAuthentication(BaseAuthentication):
@@ -16,7 +21,7 @@ class ServiceOnlyAuthentication(BaseAuthentication):
                 if token == service.token:
                     return (service, None)
             except Service.DoesNotExist:
-                print(f"Service with token '{token}' does not exist.")
+                logger.info(f"Service with token '{token}' does not exist.")
                 pass
         raise AuthenticationFailed("Invalid service token.")
 

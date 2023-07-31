@@ -236,6 +236,8 @@ class Contact(models.Model):
         verbose_name="Ім'я")
     last_name = models.CharField(
         max_length=20,
+        null=True,
+        blank=True,
         verbose_name="Фамілія")
     mobile_phone = models.CharField(
         max_length=15,

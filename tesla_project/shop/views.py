@@ -1,3 +1,7 @@
+import logging
+
+from datetime import datetime
+
 from django.urls import reverse
 from django.conf import settings
 from django.shortcuts import render
@@ -15,6 +19,9 @@ from .authentication import ServiceOnlyAuthentication,\
     ServiceOnlyAuthorizationSite
 
 
+logger = logging.getLogger(__name__)
+
+
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -22,11 +29,11 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [ServiceOnlyAuthorizationSite]
     http_method_names = ['get']
 
-    @method_decorator(cache_page(60 * 2))
+    @method_decorator(cache_page(60 * 30))
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
-    @method_decorator(cache_page(60 * 2))
+    @method_decorator(cache_page(60 * 30))
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
@@ -38,7 +45,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     permission_classes = [ServiceOnlyAuthorizationSite]
     http_method_names = ['get']
 
-    @method_decorator(cache_page(60 * 2))
+    @method_decorator(cache_page(60 * 30))
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(
@@ -57,7 +64,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         return Response(data)
 
-    @method_decorator(cache_page(60 * 2))
+    @method_decorator(cache_page(60 * 30))
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(
@@ -81,7 +88,7 @@ class ProductMainPageViewSet(viewsets.ModelViewSet):
     permission_classes = [ServiceOnlyAuthorizationSite]
     http_method_names = ['get']
 
-    @method_decorator(cache_page(60 * 2))
+    @method_decorator(cache_page(60 * 30))
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(
@@ -108,7 +115,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = [ServiceOnlyAuthorizationSite]
     http_method_names = ['get']
 
-    @method_decorator(cache_page(60 * 2))
+    @method_decorator(cache_page(60 * 30))
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
@@ -120,11 +127,11 @@ class MainPageViewSet(viewsets.ModelViewSet):
     permission_classes = [ServiceOnlyAuthorizationSite]
     http_method_names = ['get']
 
-    @method_decorator(cache_page(60 * 2))
+    @method_decorator(cache_page(60 * 30))
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
-    @method_decorator(cache_page(60 * 2))
+    @method_decorator(cache_page(60 * 30))
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(
@@ -144,12 +151,13 @@ class ContactViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         data = request.data
-        product_id = data.get('product_id', None)
+        product_id = data.get('product', None)
+        product_message = "-"
 
         if product_id is not None:
             try:
                 product = Product.objects.get(pk=product_id)
-                data['product'] = product.id
+                product_message = f"{product.name}, Модель авто: {product.model_car if product.model_car else '-'}, Ціна: {product.price}"
             except Product.DoesNotExist:
                 return Response(
                     {'error': 'Invalid product_id'},
@@ -159,20 +167,24 @@ class ContactViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
 
-        # Відправка сповіщення на електронну пошту
-        subject = "Новий контакт був доданий"
-        message = f"Ім'я: {serializer.data['first_name']}\nФамілія: \
-            {serializer.data['last_name']}\nТелефон: \
-                {serializer.data['mobile_phone']}"
+        # Send email
+        time_now = datetime.now()
+        formatted_datetime = time_now.strftime("%d.%m.%Y - %H:%M")
+        subject = "Форму з сайту заповнив клієнт"
+        first_name = serializer.data.get('first_name', "")
+        last_name = serializer.data.get('last_name', "")
+        mobile_phone = serializer.data.get('mobile_phone', "")
+        message = f"Дата і час: {formatted_datetime},\nІм'я: {first_name}\nПрізвище: {last_name}\nТелефон: {mobile_phone}\nТовар: {product_message}"
+
         from_email = settings.DEFAULT_FROM_EMAIL
         recipient_list = [settings.ADMIN_EMAIL]
 
         try:
             send_mail(subject, message, from_email, recipient_list)
         except BadHeaderError as e:
-            print(f"Invalid header found: {e}")
+            logger.error(f"Invalid header found: {e}")
         except Exception as e:
-            print(f"Failed to send email: {e}")
+            logger.error(f">>> Failed to send email: {e}")
 
         headers = self.get_success_headers(serializer.data)
         return Response(
